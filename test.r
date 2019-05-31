@@ -7,3 +7,4 @@ binlik <- function(probH, h, t) {
 ## testwerte
 
 binlik(0.5, 40, 60)
+binlik(0.5, 50, 50)
