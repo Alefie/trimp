@@ -8,3 +8,4 @@ binlik <- function(probH, h, t) {
 
 binlik(0.5, 40, 60)
 binlik(0.5, 50, 50)
+binlik(0.5, 60, 40)
