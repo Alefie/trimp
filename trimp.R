@@ -26,5 +26,41 @@ toactivitytrimp <- function(df) {
 act2 <- toactivitytrimp(data[[1]])
 head(act2)
 
+#function for athlete data
+toathlete <- function(restHR, maxHR, sex="male"){
+  athlete <- data.frame(restHR=restHR, maxHR=maxHR, sex=factor(sex, levels=c("male","female")))
+  return(athlete)
+}
+ath <- toathlete(80, 200, "female")
+ath
 
+#function for athlete with his training data
+totraining <- function(act, ath){
+  training <- data.frame(activity=act, athlete=ath)
+  return(training)
+}
 
+train <- totraining(act, ath)
+head(train)
+
+act2 <- toactivity(data[[2]])
+head(act2)
+
+train <- totraining(rbind(act,act2), ath)
+head(train)
+
+#function to count activities
+countact <- function(train){
+  n <- 0
+  for(i in 1:dim(train)[1]){
+    if(train$activity.distance[i] < 0.005){
+      n <- n+1
+      print("test")
+    }
+    train$activity.nr[i] <- n
+  }
+  return(train)
+}
+train <- countact(train)
+train
+train$activity.nr[1200]
