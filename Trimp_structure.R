@@ -16,3 +16,6 @@ toactivity <- function(df) {
 }   
 b <- toactivity(data[[1]])
 b
+
+
+#udate
