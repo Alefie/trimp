@@ -3,8 +3,9 @@ setwd("C:/Users/Zander/Uni/R-Projekt")
 data <- readRDS("eightruns.rds")
 head(data[[1]])
 
+#create classes activity,athlete
 setClass("activity", representation(time="POSIXt", latitude="numeric", longitude="numeric", altitude="numeric", distance="numeric", heart_rate="numeric", speed="numeric", cadence="numeric", duration="numeric"))
-setClass("athlete", representation(name="character", sex="character", HRest="numeric", HMax="numeric"))
+setClass("athlete", representation(name="character", sex="factor", HRest="numeric", HMax="numeric"))
 
 
 a <- new("activity", time=data[[1]]$time, latitude=data[[1]]$latitude, longitude=data[[1]]$longitude, altitude=data[[1]]$altitude, distance=data[[1]]$distance, heart_rate=data[[1]]$heart_rate, speed=data[[1]]$speed, cadence=data[[1]]$cadence)
@@ -21,11 +22,14 @@ toactivity <- function(df) {
 b <- toactivity(data[[1]])
 b
 
-dieter <- new("athlete", name="Dieter", sex="male", HRest=60, HMax=190)
-dieter
-
 #function for data of athlete
-toathlete <- function(name="Mustermann", restHR, maxHR, sex="female"){
-  athlete <- new("athlete", name=name, sex=sex, HRest=restHT, HMax= maxHR)
+toathlete <- function(restHR, maxHR, sex="female", name="Athlete"){
+  sex <- factor(sex, levels=c("male","female"))
+  if (is.na(sex)){
+    print("wrong value: sex has to be male or female")
+    return()
+  }
+  athlete <- new("athlete", name=name, sex=sex, HRest=restHR, HMax= maxHR)
   return(athlete)
 }
+toathlete(60,120,sex="dog")
