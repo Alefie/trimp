@@ -1,11 +1,11 @@
-#setwd("C:/Users/Zander/Uni/R-Projekt")
-setwd("C:/Users/Lisa/Desktop/R Projekt Final/trimp-master/trimp-master")
+setwd("C:/Users/Zander/Uni/R-Projekt")
+#setwd("C:/Users/Lisa/Desktop/R Projekt Final/trimp-master/trimp-master")
 
 data <- readRDS("eightruns.rds")
 head(data[[1]])
 
 setClass("activity", representation(time="POSIXt", latitude="numeric", longitude="numeric", altitude="numeric", distance="numeric", heart_rate="numeric", speed="numeric", cadence="numeric", duration="numeric"))
-setClass("athlete", representation(name="character", sex="factor", HRest="numeric", HMax="numeric"))
+setClass("athlete", representation(name="character", sex="character", HRest="numeric", HMax="numeric"))
 
 
 a <- new("activity", time=data[[1]]$time, latitude=data[[1]]$latitude, longitude=data[[1]]$longitude, altitude=data[[1]]$altitude, distance=data[[1]]$distance, heart_rate=data[[1]]$heart_rate, speed=data[[1]]$speed, cadence=data[[1]]$cadence)
@@ -28,14 +28,12 @@ dieter <- new("athlete", name="Dieter", sex="male", HRest=60, HMax=190)
 dieter@name
 
 #function for data of athlete
-toathlete <- function(restHR, maxHR, sex="female", name="Athlete"){
+toathlete <- function(name="Mustermann", restHR, maxHR, sex="female"){
   signature("athlete")
-  sex <- factor(sex, levels=c("male","female"))
-  if (is.na(sex)){
-    print("wrong value: sex has to be male or female")
-    return()
-  }
+  athlete <- new("athlete", name=name, sex=sex, HRest=restHT, HMax= maxHR)
+  return(athlete)
 }
+
 
 #Berechne TRIMPS####
 #TRIMP exp.####
@@ -63,26 +61,27 @@ paul_trimp
 #setClass("activity", representation(time="POSIXt", latitude="numeric", longitude="numeric", altitude="numeric", distance="numeric", heart_rate="numeric", speed="numeric", cadence="numeric", duration="numeric"))
 #setClass("athlete", representation(name="character", sex="character", HRest="numeric", HMax="numeric"))
 
-setClass("training", contains = c("activity", "athlete"))
+
+setClass("training", representation(activity="activity", athlete="athlete"))
 t <- new("training", time=data[[1]]$time, latitude=data[[1]]$latitude, longitude=data[[1]]$longitude, altitude=data[[1]]$altitude, distance=data[[1]]$distance, heart_rate=data[[1]]$heart_rate, speed=data[[1]]$speed, cadence=data[[1]]$cadence, name="Paul", sex="male", HRest=92, HMax=194) 
 t
 
 #function for athlete with his training data
-totraining <- function(df, name){
-  signature(training) 
-  act <- toactivity(df)
-  ath <- toathlete(name)
-  training <- data.frame(athlete=ath, activity=act)
-  return(training)
+totraining <- function(act, ath){
+  signature("training") 
+  tr <- new("training", activity=act, athlete=ath)
+  return(tr)
 }
 
 peter_train <- new("training", toactivity(data[[1]]), name="Peter", sex="male", HRest=92, HMax=194) 
 peter_train
 
 louis_ath <- new("athlete", name="Louis", sex="male", HRest=94, HMax=198)
-louis_train <- new("training", toactivity(data[[1]]), louis_ath) 
+louis_train <- new("training", toactivity(data[[1]]), louis) 
 louis_train
 
+louistr <- totraining(data, louis_ath)
+louistr@athlete@name
 
 dieter_train <- new("training", b, dieter)
 dieter_train
@@ -105,7 +104,7 @@ dieter_trimp_2
 
 #neuer Versuch:
 setGeneric(name="trimp_exp_neu",
-           def=function(train, df )
+           def=function(train, name, df )
            {
              standardGeneric("trimp_exp_neu")
            }
@@ -114,7 +113,7 @@ setGeneric(name="trimp_exp_neu",
 
 setMethod(f="trimp_exp_neu",
           signature="training",
-          definition=function(train, NULL)
+          definition=function(train)
           {
             if (train@sex=="male") {
               s<-1.92
@@ -143,6 +142,6 @@ setMethod(f="trimp_exp_neu",
 dieter_trimp_2 <- trimp_exp_neu(dieter_train)
 dieter_trimp_2
 
-dieter_trimp<-trimp_exp_neu(dieter, b)
+dieter_trimp<-trimp_exp(dieter, b)
 dieter_trimp
 
