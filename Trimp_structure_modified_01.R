@@ -5,7 +5,7 @@ data <- readRDS("eightruns.rds")
 head(data[[1]])
 
 setClass("activity", representation(time="POSIXt", latitude="numeric", longitude="numeric", altitude="numeric", distance="numeric", heart_rate="numeric", speed="numeric", cadence="numeric", duration="numeric"))
-setClass("athlete", representation(name="character", sex="character", HRest="numeric", HMax="numeric"))
+setClass("athlete", representation(name="character", sex="factor", HRest="numeric", HMax="numeric"))
 
 
 a <- new("activity", time=data[[1]]$time, latitude=data[[1]]$latitude, longitude=data[[1]]$longitude, altitude=data[[1]]$altitude, distance=data[[1]]$distance, heart_rate=data[[1]]$heart_rate, speed=data[[1]]$speed, cadence=data[[1]]$cadence)
@@ -28,12 +28,14 @@ dieter <- new("athlete", name="Dieter", sex="male", HRest=60, HMax=190)
 dieter@name
 
 #function for data of athlete
-toathlete <- function(name="Mustermann", restHR, maxHR, sex="female"){
+toathlete <- function(restHR, maxHR, sex="female", name="Athlete"){
   signature("athlete")
-  athlete <- new("athlete", name=name, sex=sex, HRest=restHT, HMax= maxHR)
-  return(athlete)
+  sex <- factor(sex, levels=c("male","female"))
+  if (is.na(sex)){
+    print("wrong value: sex has to be male or female")
+    return()
+  }
 }
-
 
 #Berechne TRIMPS####
 #TRIMP exp.####
@@ -78,7 +80,7 @@ peter_train <- new("training", toactivity(data[[1]]), name="Peter", sex="male", 
 peter_train
 
 louis_ath <- new("athlete", name="Louis", sex="male", HRest=94, HMax=198)
-louis_train <- new("training", toactivity(data[[1]]), louis) 
+louis_train <- new("training", toactivity(data[[1]]), louis_ath) 
 louis_train
 
 
@@ -103,7 +105,7 @@ dieter_trimp_2
 
 #neuer Versuch:
 setGeneric(name="trimp_exp_neu",
-           def=function(train, name, df )
+           def=function(train, df )
            {
              standardGeneric("trimp_exp_neu")
            }
@@ -112,7 +114,7 @@ setGeneric(name="trimp_exp_neu",
 
 setMethod(f="trimp_exp_neu",
           signature="training",
-          definition=function(train)
+          definition=function(train, NULL)
           {
             if (train@sex=="male") {
               s<-1.92
@@ -141,6 +143,6 @@ setMethod(f="trimp_exp_neu",
 dieter_trimp_2 <- trimp_exp_neu(dieter_train)
 dieter_trimp_2
 
-dieter_trimp<-trimp_exp(dieter, b)
+dieter_trimp<-trimp_exp_neu(dieter, b)
 dieter_trimp
 
