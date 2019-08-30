@@ -40,6 +40,22 @@ activity <- function(df,nr=1) {
   signature("activity")
   start <- c(as.POSIXct(df$time[1]), df$time[1:nrow(df)-1])
   dur <- as.numeric(df$time-start)
+  if(is.na(df$heart_rate[1])){
+    for(i in 2:length(df$heart_rate)){
+      if(!is.na(df$heart_rate[i])){
+        df$heart_rate[1] <- df$heart_rate[i]
+      }
+    }
+  }
+  if(is.na(df$heart_rate[1])){
+    cat("error, no heart_rate data")
+    return(-1)
+  }
+  for(j in 2:length(df$heart_rate)){
+    if(is.na(df$heart_rate[j])){
+      df$heart_rate[j] <- df$heart_rate[j-1]
+    }
+  }
   activity <- new("activity", actnr=nr, time=df$time,latitude=df$latitude, longitude=df$longitude, altitude=df$altitude, distance=df$distance/1000, heart_rate=df$heart_rate, speed=df$speed*3.6, cadence=df$cadence, duration=dur)
   return(activity)
 }   
@@ -129,7 +145,7 @@ setMethod(f="trimp_exp_neu",
               trimp <- sum((train@activity[[count]]@duration/60)*(HRr*0.64*exp(s*HRr)))
               cat("Trimp = ", trimp, "\n")
             }
-            return(-1)
+            return(length(train@activity))
           }
 )
 
