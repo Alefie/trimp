@@ -30,7 +30,7 @@ setClass("athlete",
 
 setClass("training",
          representation(
-           activity="activity",
+           activity="list",
            athlete="athlete"
          )
 )
@@ -75,9 +75,9 @@ athlete <- function(restHR, maxHR, sex="female", name="Athlete"){
 }
 
 #function for athlete with his training data
-training <- function(act, ath){
+training <- function(actls, ath){
   signature("training") 
-  tr <- new("training", activity=act, athlete=ath)
+  tr <- new("training", activity=actls, athlete=ath)
   return(tr)
 }
 
@@ -96,8 +96,12 @@ trimp_exp <- function(name, df){
 }
 
 paul <- athlete(92,194,sex="male",name="Paul")
-act <- activity(data[[1]])
+act <- actlist(data)
+act[[1]]@actnr
 tr <- training(act,paul)
+tr@activity[[1]]@actnr
+length(tr@activity)
+
 paul_trimp <- trimp_exp(paul, b)
 paul_trimp
 
@@ -119,8 +123,13 @@ setMethod(f="trimp_exp_neu",
             } else {
               s<-1.67
             }
-            HRr <- (train@activity@heart_rate - train@athlete@HRest)/(train@athlete@HMax-train@athlete@HRest)
-            return(sum((train@activity@duration/60)*(HRr*0.64*exp(s*HRr))))
+            for (count in 1:length(train@activity)){
+              cat("activity: ", train@activity[[count]]@actnr, " ")
+              HRr <- (train@activity[[count]]@heart_rate - train@athlete@HRest)/(train@athlete@HMax-train@athlete@HRest)
+              trimp <- sum((train@activity[[count]]@duration/60)*(HRr*0.64*exp(s*HRr)))
+              cat("Trimp = ", trimp, "\n")
+            }
+            return(-1)
           }
 )
 
