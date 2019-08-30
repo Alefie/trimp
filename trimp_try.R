@@ -24,7 +24,12 @@ setClass("athlete",
            name="character",
            sex="factor",
            HRest="numeric",
-           HMax="numeric"
+           HRMax="numeric",
+           Zone1="numeric",
+           Zone2="numeric",
+           Zone3="numeric",
+           Zone4="numeric",
+           Zone5="numeric"
           )
 )
 
@@ -86,7 +91,12 @@ athlete <- function(restHR, maxHR, sex="female", name="Athlete"){
     print("wrong value: sex has to be male or female")
     return()
   }
-  ath <- new("athlete", name=name, sex=sex, HRest=restHR, HMax=maxHR)
+  z1 <- (50*maxHR)/100
+  z2 <- (60*maxHR)/100
+  z3 <- (70*maxHR)/100
+  z4 <- (80*maxHR)/100
+  z5 <- (90*maxHR)/100
+  ath <- new("athlete", name=name, sex=sex, HRest=restHR, HRMax=maxHR, Zone1=c(z1,z2-0.1), Zone2=c(z2,z3-0.1), Zone3=c(z3,z4-0.1), Zone4=c(z4,z5-0.1), Zone5=c(z5,maxHR))
   return(ath)
 }
 
@@ -107,7 +117,7 @@ trimp_exp <- function(name, df){
   } else {
     s<-1.67
   }
-  HRr <- (df@heart_rate - name@HRest)/(name@HMax-name@HRest)
+  HRr <- (df@heart_rate - name@HRest)/(name@HRMax-name@HRest)
   return(sum((df@duration/60)*(HRr*0.64*exp(s*HRr))))
 }
 
@@ -121,7 +131,7 @@ length(tr@activity)
 paul_trimp <- trimp_exp(paul, b)
 paul_trimp
 
-#class method training: calculate trimp of one activity
+#class method training: calculate trimp of all activities
 setGeneric(name="trimp_exp_neu",
            def=function(train)
            {
@@ -141,7 +151,7 @@ setMethod(f="trimp_exp_neu",
             }
             for (count in 1:length(train@activity)){
               cat("activity: ", train@activity[[count]]@actnr, " ")
-              HRr <- (train@activity[[count]]@heart_rate - train@athlete@HRest)/(train@athlete@HMax-train@athlete@HRest)
+              HRr <- (train@activity[[count]]@heart_rate - train@athlete@HRest)/(train@athlete@HRMax-train@athlete@HRest)
               trimp <- sum((train@activity[[count]]@duration/60)*(HRr*0.64*exp(s*HRr)))
               cat("Trimp = ", trimp, "\n")
             }
@@ -150,3 +160,12 @@ setMethod(f="trimp_exp_neu",
 )
 
 trimp_exp_neu(tr)
+
+"to do:
+  summary for heart_rate, cadence,.. in activity
+  summary for distance, duration,.. in all activities
+  read xt? file
+  Zonal Trimp
+"
+
+
