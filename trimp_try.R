@@ -166,6 +166,7 @@ trimp_exp_neu(tr)
   summary for distance, duration,.. in all activities
   read xt? file
   Zonal Trimp
+  add one or more activities to list
 "
 
 
