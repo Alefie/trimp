@@ -179,6 +179,32 @@ tr <- training(actl, athl)
 trimp_exp(tr)
 tr <- addact(tr,act1)
 
+setGeneric(name="summary",
+           def=function(act)
+          {
+             standardGeneric("summary")
+           }
+)
+
+setMethod(f="summary",
+          signature="activity",
+          definition=function(act)
+          {
+            cat("activity ", act@actnr, " on ", format(act@time[1], "%d.%m.%y"), ":\n")
+            cat("distance:", round(act@distance[length(act@distance)], 2), "km\tduration: ", act@time[length(act@time)]-act@time[1], " min\n\n")
+            table <- matrix(c(mean(act@altitude), min(act@altitude), max(act@altitude),
+                              mean(act@heart_rate), min(act@heart_rate), max(act@heart_rate),
+                              mean(act@speed), min(act@speed), max(act@speed),
+                              mean(act@cadence), min(act@cadence), max(act@cadence)
+                              ),ncol=3,byrow=TRUE)
+            colnames(table) <- c("average", "min", "max")
+            rownames(table) <- c("altitude", "heart_rate", "speed", "cadence")
+            table <- as.table(table)
+            table
+          }
+)
+summary(act)
+
 #Berechne TRIMPS####
 
 #class method training: calculate exp_trimp of all activities
@@ -256,3 +282,7 @@ Zonal Trimp
 various plotting
 ergibt avg hr scaling sinn?
 "
+
+##some random stuff
+act <- activity(data[[1]])
+plot(act@distance,act@altitude,type = "l", xlab="distance", ylab="altitude")
