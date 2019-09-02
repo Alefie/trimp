@@ -1,4 +1,5 @@
 #setwd("C:/Users/Zander/Uni/R-Projekt")
+setwd("C:/Users/Zander/Uni_Master/Semester 2/Statistisches Programmieren mit R")
 setwd("C:/Users/Lisa/Desktop/01_09_R/trimp-master")
 
 #for .rds files
@@ -49,17 +50,20 @@ summary(r12, session = 1)
 ##################################################################
 setClass("activity",
          representation(
-            actnr="numeric",
-            time="POSIXt",
-            latitude="numeric", 
-            longitude="numeric", 
-            altitude="numeric",
-            distance="numeric",
-            heart_rate="numeric",
-            speed="numeric",
-            cadence="numeric",
-            duration="numeric"
-          )
+           actnr="numeric",
+           time="POSIXt",
+           latitude="numeric", 
+           longitude="numeric", 
+           altitude="numeric",
+           distance="numeric",
+           heart_rate="numeric",
+           speed="numeric",
+           cadence="numeric",
+           duration="numeric"
+         ),
+         prototype(
+           actnr = 1
+         )
 )
 
 setClass("athlete",
@@ -73,7 +77,7 @@ setClass("athlete",
            Zone3="numeric", #70-80%
            Zone4="numeric", #80-90%
            Zone5="numeric"  #90-100%
-          )
+         )
 )
 
 setClass("training",
@@ -150,13 +154,38 @@ training <- function(actls, ath){
   return(tr)
 }
 
+# function adds an activity to a trainings class
+setGeneric(name="addact",
+           def=function(train,act)
+              {
+                standardGeneric("addact")
+              }
+)
+
+setMethod(f="addact",
+          signature="training",
+          definition=function(train,act)
+          {
+            act@actnr <- length(train@activity) + 1
+            train@activity[[act@actnr]] <- act
+            return(train)
+          }
+)
+
+act1 <- activity(data[[1]])
+athl <- athlete(60,180)
+actl <- actlist(list(data[[2]],data[[3]]))
+tr <- training(actl, athl)
+trimp_exp(tr)
+tr <- addact(tr,act1)
+
 #Berechne TRIMPS####
 
 #class method training: calculate exp_trimp of all activities
 setGeneric(name="trimp_exp",
            def=function(train)
            {
-             standardGeneric("trimp_exp_neu")
+             standardGeneric("trimp_exp")
            }
 )
 
@@ -198,14 +227,14 @@ setMethod(f="trimp_zone",
               cat("activity: ", train@activity[[count]]@actnr, " ")
               act_hr<- train@activity[[count]]@heart_rate
               zone <- as.numeric(cut(act_hr, 
-                                 breaks = c(0,
-                                            train@athlete@Zone1[1],
-                                            train@athlete@Zone2[1],
-                                            train@athlete@Zone3[1],
-                                            train@athlete@Zone4[1],
-                                            train@athlete@Zone5[1],
-                                            train@athlete@HRMax),
-                                 labels=c(0,1,2,3,4,5)),
+                                     breaks = c(0,
+                                                train@athlete@Zone1[1],
+                                                train@athlete@Zone2[1],
+                                                train@athlete@Zone3[1],
+                                                train@athlete@Zone4[1],
+                                                train@athlete@Zone5[1],
+                                                train@athlete@HRMax),
+                                     labels=c(0,1,2,3,4,5)),
                                  right=FALSE)
               trimp <- sum((train@activity[[count]]@duration/60)*zone)
               cat("Trimp = ", trimp, "\n")
@@ -220,12 +249,10 @@ trimp_zone(tr)
 
 
 "to do:
-  summary for heart_rate, cadence,.. in activity
-  summary for distance, duration,.. in all activities
-  read tcx file
-  Zonal Trimp
-  various plotting
-  ergibt avg hr scaling sinn?
+summary for heart_rate, cadence,.. in activity
+summary for distance, duration,.. in all activities
+read tcx file
+Zonal Trimp
+various plotting
+ergibt avg hr scaling sinn?
 "
-
-
