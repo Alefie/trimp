@@ -1,9 +1,52 @@
-setwd("C:/Users/Zander/Uni/R-Projekt")
-setwd("C:/Users/Lisa/Desktop/R Projekt Final/trimp-master/trimp-master")
+#setwd("C:/Users/Zander/Uni/R-Projekt")
+setwd("C:/Users/Lisa/Desktop/01_09_R/trimp-master")
 
+#for .rds files
 data <- readRDS("eightruns.rds")
-head(data[[1]])
+#head(data[[1]])
 
+#for .tcx files
+#install.packages("zoo") #needed for trackeR
+#install.packages("trackeR")
+library("zoo") 
+library("trackeR")
+list.files()
+#read raw data
+run_1 <- readTCX(file = "b_1.tcx", timezone = "UTC")
+str(run_1)
+class(run_1) # "data.frame"
+#turn into trackeRdata object
+units1 <- generate_units()
+run1 <- trackeRdata(run_1, units = units1)
+class(run1) # "trackeRdata", "list"
+
+#alternatively
+run1_a <- read_container("b_1.tcx", timezone = "UTC") 
+
+#some ideas
+#source: https://rdrr.io/cran/trackeR/f/inst/doc/trackeR.pdf
+plot(run1)
+plot_route(run1) #witzenhausen in germany, plot correct
+leafletRoute(run1) #interactive map
+summary(run1)
+
+#combine two or more runs:
+run_2 <- readTCX(file = "b_2.tcx", timezone = "UTC")
+units2 <- generate_units()
+run2 <- trackeRdata(run_2, units = units2)
+r12<- c(run1, run2)
+# "trackeRdata" into "data.frame", sessions are counted
+r12_frame <- as.data.frame(r12)
+
+summary(r12)
+summary(r12, session = 1)
+
+###########
+#keine Ahnung wie der erkennt, dass es sich um Running handelt
+
+
+
+##################################################################
 setClass("activity",
          representation(
             actnr="numeric",
@@ -25,11 +68,11 @@ setClass("athlete",
            sex="factor",
            HRest="numeric",
            HRMax="numeric",
-           Zone1="numeric",
-           Zone2="numeric",
-           Zone3="numeric",
-           Zone4="numeric",
-           Zone5="numeric"
+           Zone1="numeric", #50-60%
+           Zone2="numeric", #60-70%
+           Zone3="numeric", #70-80%
+           Zone4="numeric", #80-90%
+           Zone5="numeric"  #90-100%
           )
 )
 
@@ -131,7 +174,7 @@ length(tr@activity)
 paul_trimp <- trimp_exp(paul, b)
 paul_trimp
 
-#class method training: calculate trimp of all activities
+#class method training: calculate exp_trimp of all activities
 setGeneric(name="trimp_exp_neu",
            def=function(train)
            {
@@ -161,12 +204,53 @@ setMethod(f="trimp_exp_neu",
 
 trimp_exp_neu(tr)
 
+#Zonal Trimp
+#Idea: Zone # replaces the actual HRate
+#good for interval training (https://de.coursera.org/lecture/science-of-training-young-athletes-part-2/trimp-zone-method-iFZhO)
+#class method training: calculate exp_trimp of all activities
+setGeneric(name="trimp_zone",
+           def=function(train)
+           {
+             standardGeneric("trimp_zone")
+           }
+)
+
+setMethod(f="trimp_zone",
+          signature="training",
+          definition=function(train)
+          {
+            for (count in 1:length(train@activity)){
+              cat("activity: ", train@activity[[count]]@actnr, " ")
+              act_hr<- train@activity[[count]]@heart_rate
+              zone <- as.numeric(cut(act_hr, 
+                                 breaks = c(0,
+                                            train@athlete@Zone1[1],
+                                            train@athlete@Zone2[1],
+                                            train@athlete@Zone3[1],
+                                            train@athlete@Zone4[1],
+                                            train@athlete@Zone5[1],
+                                            train@athlete@HRMax),
+                                 labels=c(0,1,2,3,4,5)),
+                                 right=FALSE)
+              trimp <- sum((train@activity[[count]]@duration/60)*zone)
+              cat("Trimp = ", trimp, "\n")
+            }
+            return(length(train@activity))
+          }
+)
+
+trimp_zone(tr)
+
+
+
+
 "to do:
   summary for heart_rate, cadence,.. in activity
   summary for distance, duration,.. in all activities
-  read xt? file
+  read tcx file
   Zonal Trimp
-  add one or more activities to list
+  various plotting
+  ergibt avg hr scaling sinn?
 "
 
 
