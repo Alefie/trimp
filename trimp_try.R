@@ -55,6 +55,9 @@ setClass("activity",
            latitude="numeric", 
            longitude="numeric", 
            altitude="numeric",
+           altitude_range="numeric",
+           total_climb="numeric",
+           total_descent="numeric",
            distance="numeric",
            heart_rate="numeric",
            speed="numeric",
@@ -108,7 +111,12 @@ activity <- function(df,nr=1) {
       df$heart_rate[j] <- df$heart_rate[j-1]
     }
   }
-  activity <- new("activity", actnr=nr, time=df$time,latitude=df$latitude, longitude=df$longitude, altitude=df$altitude, distance=df$distance/1000, heart_rate=df$heart_rate, speed=df$speed*3.6, cadence=df$cadence, duration=dur)
+  cli <- 0
+  des <- 0
+  for(i in 2:length(df$altitude)){
+    ifelse(df$altitude[i]>df$altitude[i-1], cli <- cli+abs(df$altitude[i]-df$altitude[i-1]), des <- des+abs(df$altitude[i]-df$altitude[i-1]))
+  }
+  activity <- new("activity", actnr=nr, time=df$time,latitude=df$latitude, longitude=df$longitude, altitude=df$altitude, altitude_range=max(df$altitude)-min(df$altitude), total_climb=cli, total_descent=des, distance=df$distance/1000, heart_rate=df$heart_rate, speed=df$speed*3.6, cadence=df$cadence, duration=dur)
   return(activity)
 }   
 
@@ -191,11 +199,15 @@ setMethod(f="summary",
           definition=function(act)
           {
             cat("activity ", act@actnr, " on ", format(act@time[1], "%d.%m.%y"), ":\n")
-            cat("distance:", round(act@distance[length(act@distance)], 2), "km\tduration: ", act@time[length(act@time)]-act@time[1], " min\n\n")
-            table <- matrix(c(mean(act@altitude), min(act@altitude), max(act@altitude),
-                              mean(act@heart_rate), min(act@heart_rate), max(act@heart_rate),
-                              mean(act@speed), min(act@speed), max(act@speed),
-                              mean(act@cadence), min(act@cadence), max(act@cadence)
+            th <- as.numeric(difftime(act@time[length(act@time)], act@time[1], units="secs")) %/% 3600
+            tm <- as.numeric((difftime(act@time[length(act@time)], act@time[1], units="secs")) - (3600*th)) %/% 60
+            ts <- as.numeric(difftime(act@time[length(act@time)], act@time[1], units="secs")) %% 60
+            cat("distance:", round(act@distance[length(act@distance)], 2), "km\tduration: ", th, ":", tm, ":", ts, " h\n\n")
+            cat("altitude_range: ", act@altitude_range, "m\ttotal_climb: ", act@total_climb, "m\ttotal_descent: ", act@total_descent, "m\n\n")
+            table <- matrix(c(round(mean(act@altitude), 2), round(min(act@altitude), 2), round(max(act@altitude), 2),
+                              round(mean(act@heart_rate), 2), round(min(act@heart_rate), 2), round(max(act@heart_rate), 2),
+                              round(mean(act@speed), 2), round(min(act@speed), 2), round(max(act@speed), 2),
+                              round(mean(act@cadence), 2), round(min(act@cadence), 2), round(max(act@cadence),2)
                               ),ncol=3,byrow=TRUE)
             colnames(table) <- c("average", "min", "max")
             rownames(table) <- c("altitude", "heart_rate", "speed", "cadence")
