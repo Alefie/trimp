@@ -59,9 +59,11 @@ setClass("activity",
            total_climb="numeric",
            total_descent="numeric",
            distance="numeric",
+           total_distance="numeric",
            heart_rate="numeric",
            speed="numeric",
            cadence="numeric",
+           total_time="numeric",
            duration="numeric"
          ),
          prototype(
@@ -116,7 +118,24 @@ activity <- function(df,nr=1) {
   for(i in 2:length(df$altitude)){
     ifelse(df$altitude[i]>df$altitude[i-1], cli <- cli+abs(df$altitude[i]-df$altitude[i-1]), des <- des+abs(df$altitude[i]-df$altitude[i-1]))
   }
-  activity <- new("activity", actnr=nr, time=df$time,latitude=df$latitude, longitude=df$longitude, altitude=df$altitude, altitude_range=max(df$altitude)-min(df$altitude), total_climb=cli, total_descent=des, distance=df$distance/1000, heart_rate=df$heart_rate, speed=df$speed*3.6, cadence=df$cadence, duration=dur)
+  ti <- as.numeric(difftime(df$time[length(df$time)], df$time[1], units="secs"))
+  activity <- new("activity", 
+                  actnr=nr, 
+                  time=df$time,
+                  latitude=df$latitude, 
+                  longitude=df$longitude,
+                  altitude=df$altitude,
+                  altitude_range=max(df$altitude)-min(df$altitude),
+                  total_climb=cli,
+                  total_descent=des,
+                  distance=df$distance/1000,
+                  total_distance=df$distance[length(df$distance)]/1000,
+                  heart_rate=df$heart_rate,
+                  speed=df$speed*3.6,
+                  cadence=df$cadence,
+                  total_time=ti,
+                  duration=dur
+                  )
   return(activity)
 }   
 
@@ -181,14 +200,14 @@ setMethod(f="addact",
 )
 
 act1 <- activity(data[[1]])
-athl <- athlete(60,180)
+athl <- athlete(60,200)
 actl <- actlist(list(data[[2]],data[[3]]))
 tr <- training(actl, athl)
 trimp_exp(tr)
 tr <- addact(tr,act1)
 
 setGeneric(name="summary",
-           def=function(act)
+           def=function(obj)
           {
              standardGeneric("summary")
            }
@@ -196,19 +215,17 @@ setGeneric(name="summary",
 
 setMethod(f="summary",
           signature="activity",
-          definition=function(act)
+          definition=function(obj)
           {
-            cat("activity ", act@actnr, " on ", format(act@time[1], "%d.%m.%y"), ":\n")
-            th <- as.numeric(difftime(act@time[length(act@time)], act@time[1], units="secs")) %/% 3600
-            tm <- as.numeric((difftime(act@time[length(act@time)], act@time[1], units="secs")) - (3600*th)) %/% 60
-            ts <- as.numeric(difftime(act@time[length(act@time)], act@time[1], units="secs")) %% 60
-            cat("distance:", round(act@distance[length(act@distance)], 2), "km\tduration: ", th, ":", tm, ":", ts, " h\n\n")
-            cat("altitude_range: ", act@altitude_range, "m\ttotal_climb: ", act@total_climb, "m\ttotal_descent: ", act@total_descent, "m\n\n")
-            table <- matrix(c(round(mean(act@altitude), 2), round(min(act@altitude), 2), round(max(act@altitude), 2),
-                              round(mean(act@heart_rate), 2), round(min(act@heart_rate), 2), round(max(act@heart_rate), 2),
-                              round(mean(act@speed), 2), round(min(act@speed), 2), round(max(act@speed), 2),
-                              round(mean(act@cadence), 2), round(min(act@cadence), 2), round(max(act@cadence),2)
-                              ),ncol=3,byrow=TRUE)
+            cat("activity ", obj@actnr, " on ", format(obj@time[1], "%d.%m.%y"), ":\n")
+            ti <- totime(obj@total_time)
+            cat("distance:", round(obj@total_distance, 2), "km\tduration: ", ti[[1]], ":", ti[[2]], ":", ti[[3]], " h\n\n")
+            cat("altitude_range: ", obj@altitude_range, "m\ttotal_climb: ", obj@total_climb, "m\ttotal_descent: ", obj@total_descent, "m\n\n")
+            table <- matrix(c(round(mean(obj@altitude), 2), round(min(obj@altitude), 2), round(max(obj@altitude), 2),
+                              round(mean(obj@heart_rate), 2), round(min(obj@heart_rate), 2), round(max(obj@heart_rate), 2),
+                              round(mean(obj@speed), 2), round(min(obj@speed), 2), round(max(obj@speed), 2),
+                              round(mean(obj@cadence), 2), round(min(obj@cadence), 2), round(max(obj@cadence),2)
+                              ), ncol=3, byrow=TRUE)
             colnames(table) <- c("average", "min", "max")
             rownames(table) <- c("altitude", "heart_rate", "speed", "cadence")
             table <- as.table(table)
@@ -216,6 +233,33 @@ setMethod(f="summary",
           }
 )
 summary(act)
+
+setMethod(f="summary",
+          signature="training",
+          definition=function(obj)
+          {
+            actnrs <- length(obj@activity)
+            cat("Number of activities:", actnrs, "\n\n")
+            tt <- 0
+            dist <- 0
+            cli <- 0
+            for(i in 1:actnrs){
+              tt <- tt + obj@activity[[i]]@total_time
+              dist <- dist + obj@activity[[i]]@total_distance
+              cli <- cli + obj@activity[[i]]@total_climb
+            }
+            at <- tt / actnrs
+            tt <- totime(tt)
+            at <- totime(at)
+            adist <- dist / actnrs
+            cat("average time of activities:\t", at[[1]], ":", at[[2]], ":", round(at[[3]], 0), "h\n")
+            cat("total activity time:\t\t", tt[[1]], ":", tt[[2]], ":", tt[[3]], "h\n\n")
+            cat("average distance of activities:\t", round(adist, 2), "\tkm\n")
+            cat("total distance:\t\t\t", round(dist, 2), "\tkm\n\n")
+            cat("total climb:\t\t\t", cli , "m\n\n")
+          }
+)
+summary(tr)
 
 #Berechne TRIMPS####
 
@@ -237,13 +281,15 @@ setMethod(f="trimp_exp",
             } else {
               s<-1.67
             }
+            trimpexp <- array()
             for (count in 1:length(train@activity)){
               cat("activity: ", train@activity[[count]]@actnr, " ")
               HRr <- (train@activity[[count]]@heart_rate - train@athlete@HRest)/(train@athlete@HRMax-train@athlete@HRest)
               trimp <- sum((train@activity[[count]]@duration/60)*(HRr*0.64*exp(s*HRr)))
+              trimpexp[count] <- trimp
               cat("Trimp = ", trimp, "\n")
             }
-            return(length(train@activity))
+            return(trimpexp)
           }
 )
 
@@ -261,6 +307,7 @@ setMethod(f="trimp_zone",
           signature="training",
           definition=function(train)
           {
+            trimpzo <- array()
             for (count in 1:length(train@activity)){
               cat("activity: ", train@activity[[count]]@actnr, " ")
               act_hr<- train@activity[[count]]@heart_rate
@@ -275,16 +322,24 @@ setMethod(f="trimp_zone",
                                      labels=c(0,1,2,3,4,5)),
                                  right=FALSE)
               trimp <- sum((train@activity[[count]]@duration/60)*zone)
+              trimpzo[count] <- trimp
               cat("Trimp = ", trimp, "\n")
             }
-            return(length(train@activity))
+            return(trimpzo)
           }
 )
 
 trimp_zone(tr)
 
-
-
+#converts time from seconds to hours,minutes and seconds
+totime <- function(sec){
+  th <- sec %/% 3600
+  tm <- (sec - (3600*th)) %/% 60
+  ts <- sec %% 60
+  ls <- list(th,tm,ts)
+  return(ls)
+}
+totime(4523)
 
 "to do:
 summary for heart_rate, cadence,.. in activity
