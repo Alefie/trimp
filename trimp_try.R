@@ -113,6 +113,9 @@ activity <- function(df,nr=1) {
       df$heart_rate[j] <- df$heart_rate[j-1]
     }
   }
+  if(is.null(df$cadence)){
+    df$cadence <- df$cadence_running
+  }
   cli <- 0
   des <- 0
   for(i in 2:length(df$altitude)){
@@ -232,7 +235,7 @@ setMethod(f="summary",
           {
             cat("activity ", obj@actnr, " on ", format(obj@time[1], "%d.%m.%y"), ":\n")
             ti <- totime(obj@total_time)
-            cat("distance:", round(obj@total_distance, 2), "km\tduration: ", ti[[1]], ":", ti[[2]], ":", ti[[3]], " h\n\n")
+            cat("distance:", round(obj@total_distance, 2), "km\t\tduration: ", ti[1], ":", ti[2], ":", ti[3], " h\n\n")
             cat("altitude_range: ", obj@altitude_range, "m\ttotal_climb: ", obj@total_climb, "m\ttotal_descent: ", obj@total_descent, "m\n\n")
             table <- matrix(c(round(mean(obj@altitude), 2), round(min(obj@altitude), 2), round(max(obj@altitude), 2),
                               round(mean(obj@heart_rate), 2), round(min(obj@heart_rate), 2), round(max(obj@heart_rate), 2),
@@ -265,8 +268,8 @@ setMethod(f="summary",
             tt <- totime(tt)
             at <- totime(at)
             adist <- dist / actnrs
-            cat("average time of activities:\t", at[[1]], ":", at[[2]], ":", round(at[[3]], 0), "h\n")
-            cat("total activity time:\t\t", tt[[1]], ":", tt[[2]], ":", tt[[3]], "h\n\n")
+            cat("average time of activities:\t", at[1], ":", at[2], ":", round(at[3], 0), "h\n")
+            cat("total activity time:\t\t", tt[1], ":", tt[2], ":", tt[3], "h\n\n")
             cat("average distance of activities:\t", round(adist, 2), "\tkm\n")
             cat("total distance:\t\t\t", round(dist, 2), "\tkm\n\n")
             cat("total climb:\t\t\t", cli , "m\n\n")
@@ -349,8 +352,8 @@ totime <- function(sec){
   th <- sec %/% 3600
   tm <- (sec - (3600*th)) %/% 60
   ts <- sec %% 60
-  ls <- list(th,tm,ts)
-  return(ls)
+  ar <- array(c(th,tm,ts))
+  return(ar)
 }
 totime(4523)
 
