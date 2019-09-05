@@ -43,7 +43,7 @@ setClass("training",
 )
 
 # function initialize activity class with dist in km and speed in km/h
-activity <- function(df,nr=1) {
+activity <- function(df, nr=1) {
   signature("activity")
   start <- c(as.POSIXct(df$time[1]), df$time[1:nrow(df)-1])
   dur <- as.numeric(df$time-start)
