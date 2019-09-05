@@ -5,19 +5,10 @@ Version: 1.0.0
 Author: Alexander Fierenz [aut, cre],
         Lisa Goecking [aut, cre]
 Maintainer: Alexander Fierenz <alexander.fierenz@stud.uni-goettingen.de>
-Description:  Gives the Trainings Impulse of your trainning in different ways. Makes summary about the trainings activity and
+Description: Gives the Trainings Impulse of your trainning in different ways. Makes summary about the trainings activity and
               has some visualization of it.
 License: CC0
 Encoding: UTF-8
 LazyData: true
 Imports: methods
-
-
-
-
-
-
-
-
-
-
+RoxygenNote: 6.1.1
