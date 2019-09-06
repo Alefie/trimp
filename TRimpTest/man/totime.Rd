@@ -11,7 +11,7 @@
 }
 \arguments{
   \item{sec}{
-  seconds as numeric value
+    seconds as numeric value
   }
 }
 \value{
