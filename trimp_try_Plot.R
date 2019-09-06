@@ -388,7 +388,7 @@ setGeneric(name="plotroute",
            }
 )
 
-#plot nu ersten Lauf
+#plot nur ersten Lauf
 setMethod(f="plotroute",
           signature="training",
           definition=function(train)
@@ -434,8 +434,11 @@ summary for heart_rate, cadence,.. in activity
 summary for distance, duration,.. in all activities
 read tcx file
 Zonal Trimp
-various plotting
-ergibt avg hr scaling sinn?
+various plotting -> 1. Plot: einzelner Lauf
+                    2. Plot: einzelner Lauf mit Höhenprofil
+                    3. Plot: heart_rate, pace, distance über Zeit
+                    4. Plot: optional, alle Startpunkte 
+Loops eliminieren
 "
 
 ##some random stuff
