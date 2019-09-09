@@ -279,6 +279,36 @@ setMethod(f="trimp_zone",
           }
 )
 
+#read tcx data and creates a new data.frame
+read_tcxToRun <- function(file){
+  doc <- xmlParse(file)                                                           #read xml data
+  data <- xmlToDataFrame(nodes <- getNodeSet(doc, "//ns:Trackpoint", "ns"))       #filter every trackingpoint
+  rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                     #make a data.frame to get every value in extension
+  df <- do.call("rbind", rows)
+
+  #rename the columns
+  names(df)[names(df)=="Time"] <- "time"
+  names(df)[names(df)=="Position.LatitudeDegrees"] <- "latitude"
+  names(df)[names(df)=="Position.LongitudeDegrees"] <- "longitude"
+  names(df)[names(df)=="AltitudeMeters"] <- "altitude"
+  names(df)[names(df)=="DistanceMeters"] <- "distance"
+  names(df)[names(df)=="Value"] <- "heart_rate"
+  names(df)[names(df)=="Extensions.TPX.Speed"] <- "speed"
+  names(df)[names(df)=="Extensions.TPX.RunCadence"] <- "cadence"
+
+  #convert values from factor to numeric/date
+  df$time <- as.POSIXct(paste(substr(as.character(df$time),1,10),substr(as.character(df$time),12,19)), tz="UTC")
+  df$latitude <- as.numeric(as.character(df$latitude))
+  df$longitude <- as.numeric(as.character(df$longitude))
+  df$altitude <- as.numeric(as.character(df$altitude))
+  df$distance <- as.numeric(as.character(df$distance))
+  df$heart_rate <- as.numeric(as.character(df$heart_rate))
+  df$speed <- as.numeric(as.character(df$speed))
+  df$cadence <- as.numeric(as.character(df$cadence))
+
+  return(df)
+}
+
 #converts time from seconds to hours,minutes and seconds
 totime <- function(sec){
   th <- sec %/% 3600
