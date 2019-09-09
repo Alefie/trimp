@@ -1,3 +1,4 @@
+#classes####
 setClass("activity",
          representation(
            actnr="numeric",
@@ -42,6 +43,7 @@ setClass("training",
          )
 )
 
+##initialization of classes####
 # function initialize activity class with dist in km and speed in km/h
 activity <- function(df, nr=1) {
   signature("activity")
@@ -140,6 +142,7 @@ training <- function(actls, ath){
   return(tr)
 }
 
+#addfunctions####
 # function adds an activity to a trainings class
 setGeneric(name="addact",
            def=function(train,act)
@@ -158,6 +161,17 @@ setMethod(f="addact",
           }
 )
 
+#timehelper####
+#converts time from seconds to hours,minutes and seconds
+totime <- function(sec){
+  th <- sec %/% 3600
+  tm <- sprintf("%02d", (sec - (3600*th)) %/% 60)
+  ts <- sprintf("%02d", (sec %% 60))
+  ar <- array(c(th,tm,ts))
+  return(ar)
+}
+
+#summary-functions####
 setGeneric(name="summary",
            def=function(obj)
            {
@@ -201,9 +215,9 @@ setMethod(f="summary",
             }
             at <- tt / actnrs
             tt <- totime(tt)
-            at <- totime(at)
+            at <- totime(round(at,0))
             adist <- dist / actnrs
-            cat("average time of activities:\t", at[1], ":", at[2], ":", round(at[3], 0), "h\n")
+            cat("average time of activities:\t", at[1], ":", at[2], ":", at[3], "h\n")
             cat("total activity time:\t\t", tt[1], ":", tt[2], ":", tt[3], "h\n\n")
             cat("average distance of activities:\t", round(adist, 2), "\tkm\n")
             cat("total distance:\t\t\t", round(dist, 2), "\tkm\n\n")
@@ -279,6 +293,7 @@ setMethod(f="trimp_zone",
           }
 )
 
+#read data####
 #read tcx data and creates a new data.frame
 read_tcxToRun <- function(file){
   doc <- xmlParse(file)                                                                   #read xml data
@@ -314,11 +329,194 @@ read_tcxToRun <- function(file){
   return(df)
 }
 
-#converts time from seconds to hours,minutes and seconds
-totime <- function(sec){
-  th <- sec %/% 3600
-  tm <- (sec - (3600*th)) %/% 60
-  ts <- sec %% 60
-  ar <- array(c(th,tm,ts))
-  return(ar)
+#TRIMP exp.####
+trimp_exp_fct <- function(obj) {
+  signature("training")
+  if (obj@athlete@sex=="male") {
+    s<-1.92
+  } else {
+    s<-1.67
+  }
+  num <- 1:length(obj@activity)
+  HRr <- lapply(num, function(x) {
+    (obj@activity[[x]]@heart_rate - obj@athlete@HRest)/(obj@athlete@HRMax-obj@athlete@HRest)
+  })
+  trimp_ex <- lapply(num, function(x) {
+    sum((obj@activity[[x]]@duration/60)*(HRr[[x]]*0.64*exp(s*HRr[[x]])))
+  }) %>% unlist(.)
+  return(trimp_ex)
 }
+
+trimp_print_fct <- function(obj, trimp) {
+  num <- 1:length(obj@activity)
+  lapply(num, function(x) {
+    ti <- totime(obj@activity[[x]]@total_time)
+    cat("activity: ", obj@activity[[x]]@actnr, " ")
+    cat("trimp = ", trimp[x] %>% round(., 2), "\t" )
+    cat("on ", format(obj@activity[[x]]@time[1], "%d.%m.%y") , "\t")
+    cat("distance: ", obj@activity[[x]]@total_distance %>% round(., 2) %>% sprintf("%4.1f", .), "\tkm\t")
+    cat("duration: ", ti[1], ":", ti[2], ":", ti[3], "\th\n")}
+  )
+  cat("")
+}
+
+setGeneric(name="trimp_exp",
+           def=function(obj)
+           {
+             standardGeneric("trimp_exp")
+           }
+)
+
+setMethod(f="trimp_exp",
+          signature="training",
+          definition=function(obj) {
+            cat("\texponential trimp \n")
+            trimp <- trimp_exp_fct(obj)
+            trimp_print_fct(obj, trimp)
+          }
+
+)
+
+#TRIMP zonal####
+trimp_z_fct <- function(obj) {
+  signature("training")
+  num <- 1:length(obj@activity)
+  act_hr<- lapply(num, function(x){
+    obj@activity[[x]]@heart_rate
+  })
+  zone <- lapply(num, function(x) {
+    as.numeric(cut(act_hr[[x]],
+                   breaks = c(0,
+                              obj@athlete@Zone1[1],
+                              obj@athlete@Zone2[1],
+                              obj@athlete@Zone3[1],
+                              obj@athlete@Zone4[1],
+                              obj@athlete@Zone5[1],
+                              obj@athlete@HRMax),
+                   labels=c(0,1,2,3,4,5)),
+               right=FALSE)})
+
+  trimp_zo <- lapply(num, function(x) {
+    sum((obj@activity[[x]]@duration/60)*zone[[x]])
+  }) %>% unlist(.)
+  return(trimp_zo)
+}
+
+
+setGeneric(name="trimp_zone",
+           def=function(obj)
+           {
+             standardGeneric("trimp_zone")
+           }
+)
+
+setMethod(f="trimp_zone",
+          signature="training",
+          definition=function(obj) {
+            cat("\tzonal trimp \n")
+            trimp <- trimp_z_fct(obj)
+            trimp_print_fct(obj, trimp)
+          }
+
+)
+
+#Plots####
+#plot one route####
+setGeneric(name="plot_route",
+           def=function(obj, num=1)
+           {
+             standardGeneric("plot_route")
+           }
+)
+
+setMethod(f="plot_route",
+          signature="training",
+          definition=function(obj, num=1)
+          {
+            ti <- totime(obj@activity[[num]]@total_time)
+            m <- leaflet() %>%
+              addTiles() %>%  # Add default OpenStreetMap map tiles
+              #supports: matrices, data frames, spatial objects
+              addMarkers(lng=obj@activity[[num]]@longitude[1], lat=obj@activity[[num]]@latitude[1], popup=paste("start run", obj@activity[[num]]@actnr))  %>%
+              addMarkers(lng=obj@activity[[num]]@longitude[length(obj@activity[[num]]@longitude)], lat=obj@activity[[num]]@latitude[length(obj@activity[[num]]@latitude)], popup=paste("end run", obj@activity[[num]]@actnr))  %>%
+              addPolylines(lng=obj@activity[[num]]@longitude, lat=obj@activity[[num]]@latitude,
+                           popup = paste0("<b>","Run No: ","</b>", obj@activity[[num]]@actnr, "<br>",
+                                          "<b>","Date: ","</b>",   obj@activity[[num]]@time, "<br>",
+                                          "<b>","Duration: ","</b>",   ti[1], ":", ti[2], ":", ti[3], " h\n\n", "<br>",
+                                          "<b>","Distance: ","</b>",   paste(round(obj@activity[[num]]@total_distance, 2), "km"), "<br>",
+                                          "<b>","Avg. Speed: ","</b>",   paste(round(obj@activity[[num]]@speed, 2), "km/h"), "<br>",
+                                          "<b>","Altitude: ","</b>",   paste(round(obj@activity[[1]]@altitude_range, 2), "m"), "<br>"
+                           )
+              )
+            print(m)
+          }
+)
+
+#plot all start points####
+setGeneric(name="plot_starts",
+           def=function(obj)
+           {
+             standardGeneric("plot_starts")
+           }
+)
+
+setMethod(f="plot_starts",
+          signature="training",
+          definition=function(obj)
+          {
+            num <- 1:length(obj@activity)
+            long <- lapply(num, function(x){obj@activity[[x]]@longitude[1]})
+            lati <- lapply(num, function(x){obj@activity[[x]]@latitude[1]})
+            ti <- lapply(num, function(x){totime(obj@activity[[x]]@total_time)})
+            m <- leaflet() %>%
+              addTiles() %>%  # Add default OpenStreetMap map tiles
+              #supports: matrices, data frames, spatial objects
+              addCircleMarkers(lng=unlist(long), lat=unlist(lati), popup = paste("run no", num), stroke=FALSE
+                               #popup=paste("start run", obj@activity[[x]]@actnr, "on", ti[[x]][1], ":", ti[[x]][2], ":", ti[[x]][3])
+              )
+            print(m)
+          }
+)
+
+#plot heart_rate, speed, atltitude over distance####
+setGeneric(name="plot_performance",
+           def=function(obj, num=1)
+           {
+             standardGeneric("plot_performance")
+           }
+)
+
+setMethod(f="plot_performance",
+          signature="training",
+          definition=function(obj, num=1)
+          {
+            ti <- cumsum(obj@activity[[num]]@duration)/60
+            p1 <- ggplot() +
+              ggtitle(paste("Run Number", obj@activity[[num]]@actnr, "on", as.Date(obj@activity[[num]]@time)[1])) +
+              ylab("Heart Rate [bpm]") +
+              theme_minimal() +
+              geom_line(aes(x = ti, y = obj@activity[[num]]@heart_rate)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5)) +
+              stat_smooth(aes(ti, obj@activity[[num]]@heart_rate ), method="loess", formula = y~x) +
+              theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+
+            p2 <- ggplot() +
+              ylab("Speed [kmh]") +
+              theme_minimal() +
+              geom_line(aes(x = ti, y = obj@activity[[num]]@speed)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5)) +
+              stat_smooth(aes(ti,obj@activity[[num]]@speed ),method="loess", formula = y~x) +
+              theme(axis.title.x = element_blank(), axis.text.x = element_blank())
+
+            p3 <- ggplot() +
+              xlab("Time [min]") +
+              ylab("Altitude [m]") +
+              theme_minimal() +
+              geom_line(aes(x = ti, y = obj@activity[[num]]@altitude)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5))
+
+            grid.newpage()
+            grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), ggplotGrob(p3), size = "last"))
+
+          }
+)
