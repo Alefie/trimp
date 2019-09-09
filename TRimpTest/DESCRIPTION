@@ -9,5 +9,5 @@ Description: Gives the Trainings Impulse of your trainning in different ways. Ma
 License: CC0
 Encoding: UTF-8
 LazyData: true
-Imports: methods
+Imports:  methods, XML
 Suggests: testthat
