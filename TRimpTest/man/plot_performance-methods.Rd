@@ -1,12 +1,12 @@
 \docType{methods}
-\name{plot_performance-methods}
-\alias{plot_performance-methods}
-\alias{plot_performance-methods, training-method}
+\name{plot_performance}
+\alias{plot_performance}
+\alias{plot_performance,training-method}
 \title{Plot heart rate, speed and altitude over time}
 \usage{
-  trimp_exp(obj, num = 1)
+  plot_performance(obj, num = 1)
 
-\S4method{plot_starts}{training}(obj, num)
+\S4method{plot_performance}{training}(obj, num = 1)
 }
 \arguments{
   \item{obj}{

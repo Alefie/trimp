@@ -1,10 +1,10 @@
 \docType{methods}
 \name{plot_route}
 \alias{plot_route}
-\alias{plot_route ,training-method}
+\alias{plot_route,training-method}
 \title{Plot a single training session}
 \usage{
-  trimp_exp(obj, num=1)
+  plot_route(obj, num = 1)
 
 \S4method{plot_route}{training}(obj, num = 1)
 }
