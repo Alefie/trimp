@@ -199,19 +199,29 @@ setMethod(f="summary",
           }
 )
 
+#summary training####
 setMethod(f="summary",
           signature="training",
           definition=function(obj)
           {
-            actnrs <- length(obj@activity)
+            summary(obj@activity)
+          }
+)
+
+#summary lits of activities####
+setMethod(f="summary",
+          signature="list",
+          definition=function(obj)
+          {
+            actnrs <- length(obj)
             cat("Number of activities:", actnrs, "\n\n")
             tt <- 0
             dist <- 0
             cli <- 0
             for(i in 1:actnrs){
-              tt <- tt + obj@activity[[i]]@total_time
-              dist <- dist + obj@activity[[i]]@total_distance
-              cli <- cli + obj@activity[[i]]@total_climb
+              tt <- tt + obj[[i]]@total_time
+              dist <- dist + obj[[i]]@total_distance
+              cli <- cli + obj[[i]]@total_climb
             }
             at <- tt / actnrs
             tt <- totime(tt)
