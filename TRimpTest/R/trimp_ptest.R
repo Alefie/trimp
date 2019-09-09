@@ -225,74 +225,6 @@ setMethod(f="summary",
           }
 )
 
-#Berechne TRIMPS####
-
-#class method training: calculate exp_trimp of all activities
-setGeneric(name="trimp_exp",
-           def=function(train)
-           {
-             standardGeneric("trimp_exp")
-           }
-)
-
-
-setMethod(f="trimp_exp",
-          signature="training",
-          definition=function(train)
-          {
-            if (train@athlete@sex=="male") {
-              s<-1.92
-            } else {
-              s<-1.67
-            }
-            trimpexp <- array()
-            for (count in 1:length(train@activity)){
-              cat("activity: ", train@activity[[count]]@actnr, " ")
-              HRr <- (train@activity[[count]]@heart_rate - train@athlete@HRest)/(train@athlete@HRMax-train@athlete@HRest)
-              trimp <- sum((train@activity[[count]]@duration/60)*(HRr*0.64*exp(s*HRr)))
-              trimpexp[count] <- trimp
-              cat("Trimp = ", trimp, "\n")
-            }
-            return(trimpexp)
-          }
-)
-
-#Zonal Trimp
-#Idea: Zone # replaces the actual HRate
-#good for interval training (https://de.coursera.org/lecture/science-of-training-young-athletes-part-2/trimp-zone-method-iFZhO)
-setGeneric(name="trimp_zone",
-           def=function(train)
-           {
-             standardGeneric("trimp_zone")
-           }
-)
-
-setMethod(f="trimp_zone",
-          signature="training",
-          definition=function(train)
-          {
-            trimpzo <- array()
-            for (count in 1:length(train@activity)){
-              cat("activity: ", train@activity[[count]]@actnr, " ")
-              act_hr<- train@activity[[count]]@heart_rate
-              zone <- as.numeric(cut(act_hr,
-                                     breaks = c(0,
-                                                train@athlete@Zone1[1],
-                                                train@athlete@Zone2[1],
-                                                train@athlete@Zone3[1],
-                                                train@athlete@Zone4[1],
-                                                train@athlete@Zone5[1],
-                                                train@athlete@HRMax),
-                                     labels=c(0,1,2,3,4,5)),
-                                 right=FALSE)
-              trimp <- sum((train@activity[[count]]@duration/60)*zone)
-              trimpzo[count] <- trimp
-              cat("Trimp = ", trimp, "\n")
-            }
-            return(trimpzo)
-          }
-)
-
 #read data####
 #read tcx data and creates a new data.frame
 read_tcxToRun <- function(file){
@@ -329,6 +261,7 @@ read_tcxToRun <- function(file){
   return(df)
 }
 
+#TRIMP####
 #TRIMP exp.####
 trimp_exp_fct <- function(obj) {
   signature("training")

@@ -4,20 +4,15 @@
 \alias{trimp_zone,training-method}
 \title{calculate the zonal Trimp of the activities}
 \usage{
-  trimp_zone(train)
+  trimp_zone(obj)
 
-\S4method{trimp_zone}{training}(train)
+\S4method{trimp_zone}{training}(obj)
 }
 \arguments{
-  \item{train}{an object of class training}
-}
-\value{
-  \item{trimpzo}{
-    array with zonal Trimp of all activities
-  }
+  \item{obj}{an object of class training}
 }
 \description{
-  Get an object of class training and calculates the zonal Trimp. Gives additionally an output of the Trimp's over all     activities
+  Get an object of class training and calculates the zonal Trimp. Gives an output of the Trimp's over all activities.
 }
 
 
