@@ -2,9 +2,9 @@
 \name{addact}
 \alias{addact}
 \alias{addact,training-method}
-\title{training.}
+\title{add activity to trainings class}
 \usage{
-addact(train, act)
+  addact(train, act)
 
 \S4method{addact}{training}(train, act)
 }
