@@ -281,9 +281,14 @@ setMethod(f="trimp_zone",
 
 #read tcx data and creates a new data.frame
 read_tcxToRun <- function(file){
-  doc <- xmlParse(file)                                                           #read xml data
-  data <- xmlToDataFrame(nodes <- getNodeSet(doc, "//ns:Trackpoint", "ns"))       #filter every trackingpoint
-  rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                     #make a data.frame to get every value in extension
+  doc <- xmlParse(file)                                                                   #read xml data
+  data <- xmlToDataFrame(nodes <- getNodeSet(doc, "//ns:Trackpoint", "ns"))               #filter every trackingpoint
+  for(i in 1:length(nodes)){
+    if(is.na(data$HeartRateBpm[i])){
+      addChildren(nodes[i][[1]], newXMLNode("HeartRateBpm", newXMLNode("Value", "Na")))   #if no entry for heart rate the value is na
+    }
+  }
+  rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                             #make a data.frame to get every value in extension
   df <- do.call("rbind", rows)
 
   #rename the columns
