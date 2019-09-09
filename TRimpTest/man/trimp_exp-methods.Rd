@@ -4,15 +4,15 @@
 \alias{trimp_exp,training-method}
 \title{calculate the exponantial Trimp of the activities}
 \usage{
-  trimp_exp(train)
+  trimp_exp(obj)
 
-\S4method{trimp_exp}{training}(train)
+\S4method{trimp_exp}{training}(obj)
 }
 \arguments{
-  \item{train}{an object of class training}
+  \item{obj}{an object of class training}
 }
 \description{
-  Get an object of class training and calculates the exponantial Trimp. Gives additionally an output of the Trimp's over all     activities
+  Get an object of class training and calculates the exponantial Trimp. Gives an output of the Trimp's over all activities.
 }
 
 
