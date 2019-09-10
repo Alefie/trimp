@@ -1,1 +1,7 @@
 exportPattern("^[[:alpha:]]+")
+import(methods)
+import(XML)
+import(leaflet)
+import(ggplot2)
+import(grid)
+import(qpdf)

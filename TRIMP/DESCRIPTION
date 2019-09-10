@@ -1,11 +1,23 @@
 Package: TRIMP
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Fierenz
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Measures Trainings Impulse
+Version: 1.0.0
+Author: Alexander Fierenz [aut, cre],
+        Lisa Goecking [aut, cre]
+Maintainer: Alexander Fierenz <alexander.fierenz@stud.uni-goettingen.de>, Lisa Goecking <Lisa.goecking@stud.uni-goettingen.de>
+Description: Gives the Trainings Impulse of your trainning in different ways. Makes summary about the trainings activity and has some visualization of it.
+License: CC0
 Encoding: UTF-8
 LazyData: true
+Imports: 
+        methods, 
+        XML, 
+        leaflet,
+        ggplot2,
+        grid,
+        qpdf
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
