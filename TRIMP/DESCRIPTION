@@ -15,7 +15,8 @@ Imports:
         leaflet,
         ggplot2,
         grid,
-        qpdf
+        qpdf,
+        dplyr
 Suggests: 
     testthat,
     knitr,
