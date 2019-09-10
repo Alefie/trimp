@@ -2,7 +2,7 @@
 \name{plot_performance}
 \alias{plot_performance}
 \alias{plot_performance,training-method}
-\title{Plot heart rate, speed and altitude over time}
+\title{Plot heart rate, speed and altitude over distance}
 \usage{
   plot_performance(obj, num = 1)
 
@@ -17,7 +17,7 @@
   }
 }
 \description{
-  Get an object of class training and plot heart rate, speed and altitude over time of one training session.
+  Get an object of class training and plot heart rate, speed and altitude over distance of one training session.
 }
 
 

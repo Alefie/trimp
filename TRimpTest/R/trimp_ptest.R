@@ -199,29 +199,19 @@ setMethod(f="summary",
           }
 )
 
-#summary training####
 setMethod(f="summary",
           signature="training",
           definition=function(obj)
           {
-            summary(obj@activity)
-          }
-)
-
-#summary lits of activities####
-setMethod(f="summary",
-          signature="list",
-          definition=function(obj)
-          {
-            actnrs <- length(obj)
+            actnrs <- length(obj@activity)
             cat("Number of activities:", actnrs, "\n\n")
             tt <- 0
             dist <- 0
             cli <- 0
             for(i in 1:actnrs){
-              tt <- tt + obj[[i]]@total_time
-              dist <- dist + obj[[i]]@total_distance
-              cli <- cli + obj[[i]]@total_climb
+              tt <- tt + obj@activity[[i]]@total_time
+              dist <- dist + obj@activity[[i]]@total_distance
+              cli <- cli + obj@activity[[i]]@total_climb
             }
             at <- tt / actnrs
             tt <- totime(tt)
@@ -384,7 +374,7 @@ setMethod(f="plot_route",
               addMarkers(lng=obj@activity[[num]]@longitude[length(obj@activity[[num]]@longitude)], lat=obj@activity[[num]]@latitude[length(obj@activity[[num]]@latitude)], popup=paste("end run", obj@activity[[num]]@actnr))  %>%
               addPolylines(lng=obj@activity[[num]]@longitude, lat=obj@activity[[num]]@latitude,
                            popup = paste0("<b>","Run No: ","</b>", obj@activity[[num]]@actnr, "<br>",
-                                          "<b>","Date: ","</b>",   obj@activity[[num]]@time, "<br>",
+                                          "<b>","Date: ","</b>", format(obj@activity[[num]]@time[1], "%d.%m.%y %H:%M:%S"), "<br>",
                                           "<b>","Duration: ","</b>",   ti[1], ":", ti[2], ":", ti[3], " h\n\n", "<br>",
                                           "<b>","Distance: ","</b>",   paste(round(obj@activity[[num]]@total_distance, 2), "km"), "<br>",
                                           "<b>","Avg. Speed: ","</b>",   paste(round(obj@activity[[num]]@speed, 2), "km/h"), "<br>",
@@ -433,30 +423,29 @@ setMethod(f="plot_performance",
           signature="training",
           definition=function(obj, num=1)
           {
-            ti <- cumsum(obj@activity[[num]]@duration)/60
             p1 <- ggplot() +
-              ggtitle(paste("Run Number", obj@activity[[num]]@actnr, "on", as.Date(obj@activity[[num]]@time)[1])) +
+              ggtitle(paste("Run Number", obj@activity[[num]]@actnr, "on", format(obj@activity[[num]]@time[1], "%d.%m.%y"))) +
               ylab("Heart Rate [bpm]") +
               theme_minimal() +
-              geom_line(aes(x = ti, y = obj@activity[[num]]@heart_rate)) +
-              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5)) +
-              stat_smooth(aes(ti, obj@activity[[num]]@heart_rate ), method="loess", formula = y~x) +
+              geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@heart_rate)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5)) +
+              stat_smooth(aes(obj@activity[[num]]@distance, obj@activity[[num]]@heart_rate ), method="loess", formula = y~x) +
               theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
             p2 <- ggplot() +
               ylab("Speed [kmh]") +
               theme_minimal() +
-              geom_line(aes(x = ti, y = obj@activity[[num]]@speed)) +
-              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5)) +
-              stat_smooth(aes(ti,obj@activity[[num]]@speed ),method="loess", formula = y~x) +
+              geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@speed)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5)) +
+              stat_smooth(aes(obj@activity[[num]]@distance,obj@activity[[num]]@speed ),method="loess", formula = y~x) +
               theme(axis.title.x = element_blank(), axis.text.x = element_blank())
 
             p3 <- ggplot() +
-              xlab("Time [min]") +
+              xlab("Distance [km]") +
               ylab("Altitude [m]") +
               theme_minimal() +
-              geom_line(aes(x = ti, y = obj@activity[[num]]@altitude)) +
-              scale_x_continuous(breaks = seq(from = 0, to = floor(max(ti)), by = 5))
+              geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@altitude)) +
+              scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5))
 
             grid.newpage()
             grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), ggplotGrob(p3), size = "last"))
