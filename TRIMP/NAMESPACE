@@ -4,5 +4,5 @@ import(XML)
 import(leaflet)
 import(ggplot2)
 import(grid)
-import(qpdf)
 import(dplyr)
+
