@@ -43,6 +43,7 @@ data8 <- read_tcxToRun("b_8.tcx")
 ###Activity
 ```{r warning = FALSE}
 act1 <- activity(data1)
+slotNames(act1)
 activities <- actlist(list(data1,data2,data3,data4,data5,data6,data7))
 ```
 ###Athlete
@@ -54,6 +55,7 @@ gerd
 ###Training
 ```{r}
 tr <- training(activities, gerd)
+slotNames(tr)
 ```
 
 ###add another activity
