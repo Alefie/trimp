@@ -204,8 +204,8 @@ setMethod(f = "addact",
 # converts time from seconds to hours, minutes and seconds
 totime <- function(sec){
   th <- sec %/% 3600
-  tm <- sprintf("%02d", (sec - (3600 * th)) %/% 60)
-  ts <- sprintf("%02d", (sec %% 60))
+  tm <- sprintf("%02g", (sec - (3600 * th)) %/% 60)
+  ts <- sprintf("%02g", (round(sec %% 60, 0)))
   ar <- array(c(th, tm, ts))
   return(ar)
 }
@@ -227,9 +227,9 @@ setMethod(f = "summary",
             ti <- totime(obj@total_time)
             cat("distance:",          round(obj@total_distance, 2),
                 "km\t\tduration: ",   ti[1], ":", ti[2], ":", ti[3], " h\n\n")
-            cat("altitude_range: ",   obj@altitude_range,
-                "m\ttotal_climb: ",   obj@total_climb,
-                "m\ttotal_descent: ", obj@total_descent, "m\n\n")
+            cat("altitude_range: ",   round(obj@altitude_range, 2),
+                "m\ttotal_climb: ",   round(obj@total_climb, 2),
+                "m\ttotal_descent: ", round(obj@total_descent, 2), "m\n\n")
             table <- matrix(c(round(mean(obj@altitude), 2),   round(min(obj@altitude), 2),   round(max(obj@altitude), 2),
                               round(mean(obj@heart_rate), 2), round(min(obj@heart_rate), 2), round(max(obj@heart_rate), 2),
                               round(mean(obj@speed), 2),      round(min(obj@speed), 2),      round(max(obj@speed), 2),
@@ -243,33 +243,29 @@ setMethod(f = "summary",
 )
 
 # summarieses the results of all training sessions
-setMethod(f = "summary",
-          signature  = "training",
-          definition = function(obj)
+setMethod(f="summary",
+          signature="training",
+          definition=function(obj)
           {
-            actnr <- length(obj@activity)
-
-            # calculates total_time, _climb, and _time of all sessions
-            res <- sapply(1 : actnr, function(x) {
-              sum(obj@activity[[x]]@total_time)
-              sum(obj@activity[[x]]@total_climb)
-              sum(obj@activity[[x]]@total_time)
-            }) %>% array(dim = c(length(obj@activity), 3))
-            tt    <- sum(res[, 1]) # total time
-            dist  <- sum(res[, 2]) # total distance
-            cli   <- sum(res[, 3]) # total climb
-            at    <- tt / actnr
-            tt    <- totime(tt)
-            at    <- totime(round(at, 0)) # avg time
-            adist <- dist / actnr    # avg distance
-
-            # output on console:
-            cat("Number of activities:",         actnr, "\n\n")
+            actnrs <- length(obj@activity)
+            cat("Number of activities:", actnrs, "\n\n")
+            tt <- 0
+            dist <- 0
+            cli <- 0
+            for(i in 1:actnrs){
+              tt <- tt + obj@activity[[i]]@total_time
+              dist <- dist + obj@activity[[i]]@total_distance
+              cli <- cli + obj@activity[[i]]@total_climb
+            }
+            at <- tt / actnrs
+            tt <- totime(tt)
+            at <- totime(at)
+            adist <- dist / actnrs
             cat("average time of activities:\t", at[1], ":", at[2], ":", at[3], "h\n")
-            cat("total activity time:\t\t",      tt[1], ":", tt[2], ":", tt[3], "h\n\n")
+            cat("total activity time:\t\t", tt[1], ":", tt[2], ":", tt[3], "h\n\n")
             cat("average distance of activities:\t", round(adist, 2), "\tkm\n")
-            cat("total distance:\t\t\t",             round(dist, 2), "\tkm\n\n")
-            cat("total climb:\t\t\t", cli , "m\n\n")
+            cat("total distance:\t\t\t", round(dist, 2), "\tkm\n\n")
+            cat("total climb:\t\t\t", round(cli, 2) , "m\n\n")
           }
 )
 
