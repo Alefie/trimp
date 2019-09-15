@@ -212,7 +212,7 @@ totime <- function(sec){
 
 # summary functions ####
 setGeneric(name = "summary",
-           def  = function(obj)
+           def  = function(obj, nr = NULL)
            {
              standardGeneric("summary")
            }
@@ -221,12 +221,14 @@ setGeneric(name = "summary",
 # summarieses the results of one training session
 setMethod(f = "summary",
           signature  = "activity",
-          definition = function(obj)
+          definition = function(obj, nr = NULL)
           {
             cat("activity ", obj@actnr, " on ", format(obj@time[1], "%d.%m.%y"), ":\n")
             ti <- totime(obj@total_time)
-            cat("distance:",          round(obj@total_distance, 2),
-                "km\t\tduration: ",   ti[1], ":", ti[2], ":", ti[3], " h\n\n")
+            pace <- totime(round(obj@total_time/obj@total_distance, 0))
+            cat("distance:\t",          round(obj@total_distance, 2),
+                "km\t\tduration: ",   ti[1], ":", ti[2], ":", ti[3], "h\n")
+            cat("pace:\t\t", pace[2], ":", pace[3], "min/km\n\n")
             cat("altitude_range: ",   round(obj@altitude_range, 2),
                 "m\ttotal_climb: ",   round(obj@total_climb, 2),
                 "m\ttotal_descent: ", round(obj@total_descent, 2), "m\n\n")
@@ -238,15 +240,17 @@ setMethod(f = "summary",
             colnames(table) <- c("average", "min", "max")
             rownames(table) <- c("altitude", "heart_rate", "speed", "cadence")
             table <- as.table(table)
-            table
+            print(table)
+            cat("\n\n\n")
           }
 )
 
 # summarieses the results of all training sessions
-setMethod(f = "summary",
-          signature  = "training",
-          definition = function(obj)
+setMethod(f ="summary",
+          signature="training",
+          definition=function(obj, nr = NULL)
           {
+            print(nr)
             actnrs <- length(obj@activity)
             cat("Number of activities:", actnrs, "\n\n")
             tt <- 0
@@ -262,10 +266,15 @@ setMethod(f = "summary",
             at <- totime(at)
             adist <- dist / actnrs
             cat("average time of activities:\t", at[1], ":", at[2], ":", at[3], "h\n")
-            cat("total activity time:\t\t",      tt[1], ":", tt[2], ":", tt[3], "h\n\n")
+            cat("total activity time:\t\t", tt[1], ":", tt[2], ":", tt[3], "h\n\n")
             cat("average distance of activities:\t", round(adist, 2), "\tkm\n")
-            cat("total distance:\t\t\t",             round(dist, 2), "\tkm\n\n")
-            cat("total climb:\t\t\t",                round(cli, 2) , "m\n\n")
+            cat("total distance:\t\t\t", round(dist, 2), "\tkm\n\n")
+            cat("total climb:\t\t\t", round(cli, 2) , "m\n\n\n\n")
+            if (!is.null(nr)) {
+              for (i in nr){
+                summary(obj@activity[[i]])
+              }
+            }
           }
 )
 
