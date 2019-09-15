@@ -9,9 +9,13 @@
 \S4method{addact}{training}(train, act)
 }
 \arguments{
-  \item{train}{an object of class training}
+  \item{train}{
+    an object of class training
+  }
 
-  \item{act}{an object of class activity}
+  \item{act}{
+    an object of class activity
+  }
 }
 \value{
   \item{train}{

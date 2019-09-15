@@ -69,6 +69,7 @@ tr <- addact(tr, act8)
 summary(act1)
 summary(tr@activity[[2]])
 summary(tr)
+summary(tr, c(2,5))
 ```
 
 ##Trimp
