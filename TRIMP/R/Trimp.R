@@ -274,36 +274,56 @@ setMethod(f = "summary",
 read_tcxToRun <- function(file) {
   doc <- xmlParse(file)                                                                   #read xml data
   data <- xmlToDataFrame(nodes <- getNodeSet(doc, "//ns:Trackpoint", "ns"))               #filter every trackingpoint
-  for(i in 1 : length(nodes)) {
-    if(is.na(data$HeartRateBpm[i])) {
-      addChildren(nodes[i][[1]], newXMLNode("HeartRateBpm", newXMLNode("Value", "Na")))   #if no entry for heart rate the value is na
+  for (i in 1 : length(nodes)) {                                                          #add new nodes if values are missing
+    if(is.null(data$HeartRateBpm[i]) || is.na(data$HeartRateBpm[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("HeartRateBpm", newXMLNode("Value", "Na")))
+    }
+    if(is.null(data$Time[i]) || is.na(data$Time[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("Time", "Na"))
+    }
+    if(is.null(data$Position[i]) || is.na(data$Position[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("Position", newXMLNode("LatitudeDegrees", "Na"), newXMLNode("LongitudeDegrees", "Na")))
+    }
+    if(is.null(data$AltitudeMeters[i]) || is.na(data$AltitudeMeters[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("AltitudeMeters", "Na"))
+    }
+    if(is.null(data$DistanceMeters[i]) || is.na(data$DistanceMeters[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("DistanceMeters", "Na"))
+    }
+    if(is.null(data$Speed[i]) || is.na(data$Speed[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Speed", "Na"))))
+    }
+    if(is.null(data$Cadence[i]) || is.na(data$Cadence[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Cadence", "Na"))))
     }
   }
-  rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                             #make a data.frame to get every value in extension
+
+  rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                             #make a data.frame of each tracking point
   df <- do.call("rbind", rows)
 
-  #rename the columns
-  names(df)[names(df) == "Time"] <- "time"
-  names(df)[names(df) == "Position.LatitudeDegrees"] <- "latitude"
-  names(df)[names(df) == "Position.LongitudeDegrees"] <- "longitude"
-  names(df)[names(df) == "AltitudeMeters"] <- "altitude"
-  names(df)[names(df) == "DistanceMeters"] <- "distance"
-  names(df)[names(df) == "Value"] <- "heart_rate"
-  names(df)[names(df) == "Extensions.TPX.Speed"] <- "speed"
-  names(df)[names(df) == "Extensions.TPX.RunCadence"] <- "cadence"
+  names(df)[names(df)=="Time"] <- "time"
+  names(df)[names(df)=="Position.LatitudeDegrees"] <- "latitude"
+  names(df)[names(df)=="Position.LongitudeDegrees"] <- "longitude"
+  names(df)[names(df)=="AltitudeMeters"] <- "altitude"
+  names(df)[names(df)=="DistanceMeters"] <- "distance"
+  names(df)[names(df)=="Value"] <- "heart_rate"
+  names(df)[names(df)=="Extensions.TPX.Speed"] <- "speed"
+  names(df)[names(df)=="Speed"] <- "speed"
+  names(df)[names(df)=="Extensions.TPX.Cadence"] <- "cadence"
+  names(df)[names(df)=="Cadence"] <- "cadence"
 
   #convert values from factor to numeric/date
-  df$time       <- as.POSIXct(paste(substr(as.character(df$time),1,10),
-                                    substr(as.character(df$time),12,19)), tz="UTC")
-  df$latitude   <- as.numeric(as.character(df$latitude))
-  df$longitude  <- as.numeric(as.character(df$longitude))
-  df$altitude   <- as.numeric(as.character(df$altitude))
-  df$distance   <- as.numeric(as.character(df$distance))
+  df$time <- as.POSIXct(paste(substr(as.character(df$time),1,10),substr(as.character(df$time),12,19)), tz="UTC")
+  df$latitude <- as.numeric(as.character(df$latitude))
+  df$longitude <- as.numeric(as.character(df$longitude))
+  df$altitude <- as.numeric(as.character(df$altitude))
+  df$distance <- as.numeric(as.character(df$distance))
   df$heart_rate <- as.numeric(as.character(df$heart_rate))
-  df$speed      <- as.numeric(as.character(df$speed))
-  df$cadence    <- as.numeric(as.character(df$cadence))
+  df$speed <- as.numeric(as.character(df$speed))
+  df$cadence <- as.numeric(as.character(df$cadence))
 
   return(df)
+
 }
 
 # TRIMP ####
