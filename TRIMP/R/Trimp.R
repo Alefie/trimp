@@ -61,10 +61,10 @@ setClass("training",
 activity <- function(df, nr = 1) {
   signature("activity")
   start <- c(as.POSIXct(df$time[1]), df$time[1 : nrow(df) - 1])
-
+  
   # calculates the duration of each sequence
   dur <- as.numeric(df$time-start)
-
+  
   # if heart_rate entry is missing: last observation carry forward
   if(is.na(df$heart_rate[1])) {
     for(i in 2 : length(df$heart_rate)) {
@@ -85,7 +85,7 @@ activity <- function(df, nr = 1) {
   if(is.null(df$cadence)) {
     df$cadence <- df$cadence_running
   }
-
+  
   # calculates the total climb and descent
   cli <- 0
   des <- 0
@@ -94,10 +94,10 @@ activity <- function(df, nr = 1) {
            cli <- cli + abs(df$altitude[i] - df$altitude[i - 1]),
            des <- des + abs(df$altitude[i] - df$altitude[i - 1]))
   }
-
+  
   # calculates the total time of a session
   ti <- as.numeric(difftime(df$time[length(df$time)], df$time[1], units="secs"))
-
+  
   activity <- new("activity",
                   actnr          = nr,
                   time           = df$time,
@@ -134,7 +134,7 @@ actlist <- function(actls) {
 athlete <- function(restHR, maxHR, sex = "female", name = "Athlete"){
   signature("athlete")
   sex <- factor(sex, levels = c("male","female"))
-
+  
   # error handling
   if (restHR > maxHR) {
     stop("restHR cannot be greater than maxHR")
@@ -148,14 +148,14 @@ athlete <- function(restHR, maxHR, sex = "female", name = "Athlete"){
   if (is.na(sex)) {
     stop("wrong value: sex has to be male or female")
   }
-
+  
   # calculates athletes trimp zones
   z1 <- (50 * maxHR) / 100
   z2 <- (60 * maxHR) / 100
   z3 <- (70 * maxHR) / 100
   z4 <- (80 * maxHR) / 100
   z5 <- (90 * maxHR) / 100
-
+  
   ath <- new("athlete",
              name  = name,
              sex   = sex,
@@ -218,7 +218,7 @@ setGeneric(name = "summary",
            }
 )
 
-# summarieses the results of one training session
+# summarizes the results of one training session
 setMethod(f = "summary",
           signature  = "activity",
           definition = function(obj, nr = NULL)
@@ -245,7 +245,7 @@ setMethod(f = "summary",
           }
 )
 
-# summarieses the results of all training sessions
+# summarizes the results of all training sessions
 setMethod(f = "summary",
           signature  = "training",
           definition = function(obj, nr = NULL)
@@ -302,10 +302,10 @@ read_tcxToRun <- function(file) {
       addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Speed", "Na"), newXMLNode("Cadence", "Na"))))
     }
   }
-
+  
   rows <- lapply(nodes, function(x) data.frame(xmlToList(x)))                             #make a data.frame of each tracking point
   df <- do.call("rbind", rows)
-
+  
   #rename the columns
   names(df)[names(df) == "Time"] <- "time"
   names(df)[names(df) == "Position.LatitudeDegrees"] <- "latitude"
@@ -318,7 +318,7 @@ read_tcxToRun <- function(file) {
   names(df)[names(df) == "Extensions.TPX.Cadence"] <- "cadence"
   names(df)[names(df) == "Extensions.TPX.RunCadence"] <- "cadence"
   names(df)[names(df) == "Cadence"] <- "cadence"
-
+  
   #convert values from factor to numeric/date
   df$time       <- as.POSIXct(paste(substr(as.character(df$time),1,10),
                                     substr(as.character(df$time),12,19)), tz="UTC")
@@ -329,7 +329,12 @@ read_tcxToRun <- function(file) {
   df$heart_rate <- as.numeric(as.character(df$heart_rate))
   df$speed      <- as.numeric(as.character(df$speed))
   df$cadence    <- as.numeric(as.character(df$cadence))
-
+  
+  # last observation carry forward for speed
+  v <- !(df$speed==0)
+  df$speed <- c(0, df$speed[v])[cumsum(v)+1]
+  
+  
   return(df)
 }
 
@@ -358,16 +363,16 @@ trimp_print_fct <- function(obj, trimp) {
   num <- 1:length(obj@activity)
   lapply(num, function(x) {
     ti <- totime(obj@activity[[x]]@total_time)
-
     # output on console:
     cat("activity: ", obj@activity[[x]]@actnr, " ")
-    cat("trimp = ",   trimp[x] %>% round(., 2), "\t" )
+    cat("trimp = ",   trimp[x] %>% round(., 2)%>% sprintf("%5.1f", .), "\t" )
     cat("on ",        format(obj@activity[[x]]@time[1], "%d.%m.%y") , "\t")
     cat("distance: ", obj@activity[[x]]@total_distance %>% round(., 2) %>% sprintf("%4.1f", .), "\tkm\t")
     cat("duration: ", ti[1], ":", ti[2], ":", ti[3], "\th\n")}
   )
   cat("")
 }
+
 
 setGeneric(name = "trimp_exp",
            def  = function(obj)
@@ -383,18 +388,17 @@ setMethod(f = "trimp_exp",
             trimp <- trimp_exp_fct(obj)
             trimp_print_fct(obj, trimp)
           }
-
+          
 )
 
-# trimp zonal function ####
-trimp_z_fct <- function(obj) {
-  signature("training")
+# function that calculates the zone for each sequence
+trimp_zone_values <- function(obj) {
+  signalCondition("training")
   num <- 1:length(obj@activity)
   act_hr <- lapply(num, function(x) {
     obj@activity[[x]]@heart_rate
   })
-
-  # calculates the zone for each sequence
+  
   zone <- lapply(num, function(x) {
     as.numeric(cut(act_hr[[x]],
                    breaks = c(0,
@@ -406,7 +410,18 @@ trimp_z_fct <- function(obj) {
                               obj@athlete@HRMax),
                    labels=c(0, 1, 2, 3, 4, 5)),
                right=FALSE)})
+  return(zone)
+}
 
+# trimp zonal function ####
+trimp_z_fct <- function(obj) {
+  signature("training")
+  num <- 1:length(obj@activity)
+  
+  # gets the trimp zone values
+  zone <- trimp_zone_values(obj)
+  
+  # calculates the trimp values
   trimp_zo <- lapply(num, function(x) {
     sum((obj@activity[[x]]@duration / 60)*zone[[x]])
   }) %>% unlist(.)
@@ -433,7 +448,7 @@ setMethod(f = "trimp_zone",
 # plot sessions ####
 # plot one route####
 setGeneric(name = "plot_route",
-           def  = function(obj, num=1)
+           def  = function(obj, num = 1)
            {
              standardGeneric("plot_route")
            }
@@ -446,15 +461,15 @@ setMethod(f = "plot_route",
             ti <- totime(obj@activity[[num]]@total_time)
             m  <- leaflet() %>%
               addTiles() %>%  # adds default OpenStreetMap map tiles
-
+              
               # add start points
               addMarkers(lng=obj@activity[[num]]@longitude[1], lat=obj@activity[[num]]@latitude[1],
                          popup=paste("start run", obj@activity[[num]]@actnr))  %>%
-
+              
               #add end points
               addMarkers(lng=obj@activity[[num]]@longitude[length(obj@activity[[num]]@longitude)], lat=obj@activity[[num]]@latitude[length(obj@activity[[num]]@latitude)],
                          popup=paste("end run", obj@activity[[num]]@actnr))  %>%
-
+              
               # plot route
               addPolylines(lng=obj@activity[[num]]@longitude, lat=obj@activity[[num]]@latitude,
                            popup = paste0("<b>","Run No: "," </b>",     obj@activity[[num]]@actnr, "<br>",
@@ -506,7 +521,7 @@ setMethod(f = "plot_performance",
           signature  = "training",
           definition = function(obj, num = 1)
           {
-
+            
             # 1st: heart rate over distance
             p1 <- ggplot() +
               ggtitle(paste("Run Number", obj@activity[[num]]@actnr, "on", format(obj@activity[[num]]@time[1], "%d.%m.%y"))) +
@@ -514,18 +529,18 @@ setMethod(f = "plot_performance",
               theme_minimal() +
               geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@heart_rate)) +
               scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5)) +
-              stat_smooth(aes(obj@activity[[num]]@distance, obj@activity[[num]]@heart_rate ), method="loess", formula = y~x) +
+              stat_smooth(aes(obj@activity[[num]]@distance, obj@activity[[num]]@heart_rate ), method="loess", formula = y~x, span = 0.15) +
               theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-
+            
             # 2nd: speed over distance
             p2 <- ggplot() +
               ylab("Speed [kmh]") +
               theme_minimal() +
               geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@speed)) +
               scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5)) +
-              stat_smooth(aes(obj@activity[[num]]@distance,obj@activity[[num]]@speed ),method="loess", formula = y~x) +
+              stat_smooth(aes(obj@activity[[num]]@distance,obj@activity[[num]]@speed ),method="loess", formula = y~x, span = 0.15) +
               theme(axis.title.x = element_blank(), axis.text.x = element_blank())
-
+            
             # 3rd: altitude over distance
             p3 <- ggplot() +
               xlab("Distance [km]") +
@@ -533,9 +548,49 @@ setMethod(f = "plot_performance",
               theme_minimal() +
               geom_line(aes(x = obj@activity[[num]]@distance, y = obj@activity[[num]]@altitude)) +
               scale_x_continuous(breaks = seq(from = 0, to = floor(max(obj@activity[[num]]@distance)), by = 5))
-
+            
             grid.newpage()
             grid.draw(rbind(ggplotGrob(p1), ggplotGrob(p2), ggplotGrob(p3), size = "last"))
+            
+          }
+)
 
+
+# plot heart_rate, speed, atltitude over distance
+setGeneric(name = "plot_trimp_zones",
+           def  = function(obj, num = 1)
+           {
+             standardGeneric("plot_trimp_zones")
+           }
+)
+
+setMethod(f = "plot_trimp_zones",
+          signature  = "training",
+          definition = function(obj, num = 1)
+          {
+            # get the trimp zone numbers
+            tz <- trimp_zone_values(obj)[[num]]
+            
+            # get the corresponding time in sequence in minutes
+            ti <- obj@activity[[num]]@duration/60 
+            
+            # total time in minutes in each zone 
+            val_1 <- sum(ti[tz==1])
+            val_2 <- sum(ti[tz==2])
+            val_3 <- sum(ti[tz==3])
+            val_4 <- sum(ti[tz==4])
+            val_5 <- sum(ti[tz==5])
+            
+            # creates data.frame with zone and time
+            df <- data.frame("zone" = 1:5, "time" = c(val_1, val_2, val_3, val_4, val_5))
+            
+            # plot result
+            ggplot(data=df, aes(x=zone, y=time)) +
+              ggtitle(paste("Run Number", obj@activity[[num]]@actnr, "on", format(obj@activity[[num]]@time[1], "%d.%m.%y"))) +
+              ylab("Total Time in Zone [min]") +
+              xlab("Zone") +
+              geom_bar(stat = "identity", fill = "steelblue") +
+              coord_flip() +
+              theme_minimal()
           }
 )
