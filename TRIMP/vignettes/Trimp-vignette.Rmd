@@ -108,3 +108,9 @@ plot_starts(tr) %>%
 plot_performance(tr)
 plot_performance(tr, 8)
 ```
+
+###dwell time in minutes in a trimp zone
+```{r}
+plot_trimp_zones(tr)
+plot_trimp_zones(tr, 8)
+```
