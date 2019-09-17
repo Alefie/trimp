@@ -298,11 +298,8 @@ read_tcxToRun <- function(file) {
     if(is.null(data$DistanceMeters[i]) || is.na(data$DistanceMeters[i])) {
       addChildren(nodes[i][[1]], newXMLNode("DistanceMeters", "Na"))
     }
-    if(is.null(data$Speed[i]) || is.na(data$Speed[i])) {
-      addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Speed", "Na"))))
-    }
-    if(is.null(data$Cadence[i]) || is.na(data$Cadence[i])) {
-      addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Cadence", "Na"))))
+    if(is.null(data$Extensions[i]) || is.na(data$Extensions[i])) {
+      addChildren(nodes[i][[1]], newXMLNode("Extensions", newXMLNode("TPX", newXMLNode("Speed", "Na"), newXMLNode("Cadence", "Na"))))
     }
   }
 
@@ -319,6 +316,7 @@ read_tcxToRun <- function(file) {
   names(df)[names(df) == "Extensions.TPX.Speed"] <- "speed"
   names(df)[names(df) == "Speed"] <- "speed"
   names(df)[names(df) == "Extensions.TPX.Cadence"] <- "cadence"
+  names(df)[names(df) == "Extensions.TPX.RunCadence"] <- "cadence"
   names(df)[names(df) == "Cadence"] <- "cadence"
 
   #convert values from factor to numeric/date
