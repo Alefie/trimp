@@ -16,6 +16,8 @@ knitr::opts_chunk$set(
   out.width = '700px',
   out.length = '400px',
   collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
   comment = "#>"
 )
 ```
@@ -26,7 +28,7 @@ knitr::opts_chunk$set(
 library(TRIMP)
 ```
 
-```{r warning = FALSE}
+```{r}
 setwd("~/")
 
 data1 <- read_tcxToRun("b_1.tcx")
@@ -41,7 +43,7 @@ data8 <- read_tcxToRun("b_8.tcx")
 
 ##Initialize Classes
 ###Activity
-```{r warning = FALSE}
+```{r}
 act1 <- activity(data1)
 slotNames(act1)
 activities <- actlist(list(data1,data2,data3,data4,data5,data6,data7))
