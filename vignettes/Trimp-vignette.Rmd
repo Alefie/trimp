@@ -1,0 +1,118 @@
+---
+title: "Trimp-vignette"
+author: "Alexander Fierenz, Lisa Goecking"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Trimp-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  fig.height = 9,
+  fig.width = 10,
+  out.width = '700px',
+  out.length = '400px',
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>"
+)
+```
+
+#TRIMP
+##Loading Data
+```{r setup}
+library(TRIMP)
+```
+
+```{r}
+setwd("~/")
+
+data1 <- read_tcxToRun("b_1.tcx")
+data2 <- read_tcxToRun("b_2.tcx")
+data3 <- read_tcxToRun("b_3.tcx")
+data4 <- read_tcxToRun("b_4.tcx")
+data5 <- read_tcxToRun("b_5.tcx")
+data6 <- read_tcxToRun("b_6.tcx")
+data7 <- read_tcxToRun("b_7.tcx")
+data8 <- read_tcxToRun("b_8.tcx")
+```
+
+##Initialize Classes
+###Activity
+```{r}
+act1 <- activity(data1)
+slotNames(act1)
+activities <- actlist(list(data1,data2,data3,data4,data5,data6,data7))
+```
+###Athlete
+```{r}
+gerd <- athlete(50, 200, name = "Gerd", sex = "male")
+gerd
+```
+
+###Training
+```{r}
+tr <- training(activities, gerd)
+slotNames(tr)
+```
+
+###add another activity
+```{r}
+act8 <- activity(data8)
+tr <- addact(tr, act8)
+```
+
+##summary of activities
+```{r}
+summary(act1)
+summary(tr@activity[[2]])
+summary(tr)
+summary(tr, c(2,5))
+```
+
+##Trimp
+###exponantial Trimp
+```{r}
+trimp_exp(tr)
+```
+
+###zonal Trimp
+```{r}
+trimp_zone(tr)
+```
+
+##Plots
+###running route
+```{r}
+library(dplyr)
+library(leaflet)
+plot_route(tr) %>%
+  setView(lng = 9.83, lat = 51.3, zoom = 12)
+plot_route(tr, 3) %>%
+   setView(lng = -8.77, lat = 38.4, zoom = 12)
+
+```
+
+###running start points
+```{r}
+library(dplyr)
+library(leaflet)
+plot_starts(tr) %>%
+  setView(lng = 0, lat = 40, zoom = 3)
+```
+
+###overview of the performance
+```{r}
+plot_performance(tr)
+plot_performance(tr, 8)
+```
+
+###dwell time in minutes in a trimp zone
+```{r}
+plot_hr_zones(tr)
+plot_hr_zones(tr, 8)
+```
