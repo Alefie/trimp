@@ -82,6 +82,12 @@ activity <- function(df, nr = 1) {
       df$heart_rate[j] <- df$heart_rate[j - 1]
     }
   }
+
+  # last observation carry forward for speed
+  v <- !(df$speed==0)
+  df$speed <- c(0, df$speed[v])[cumsum(v)+1]
+
+  #for readTCX() from trackR
   if(is.null(df$cadence)) {
     df$cadence <- df$cadence_running
   }
@@ -329,11 +335,6 @@ read_tcxToRun <- function(file) {
   df$heart_rate <- as.numeric(as.character(df$heart_rate))
   df$speed      <- as.numeric(as.character(df$speed))
   df$cadence    <- as.numeric(as.character(df$cadence))
-
-  # last observation carry forward for speed
-  v <- !(df$speed==0)
-  df$speed <- c(0, df$speed[v])[cumsum(v)+1]
-
 
   return(df)
 }
